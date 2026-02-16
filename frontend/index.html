@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Consistency Checker Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Data Consistency Checker</h1>
+            <p>Monitor and maintain data consistency across your MongoDB collections</p>
+        </header>
+
+        <main>
+            <!-- Status Section -->
+            <section class="status-section">
+                <h2>System Status</h2>
+                <div class="status-grid">
+                    <div class="status-card" id="consistency-status">
+                        <h3>Consistency Status</h3>
+                        <div class="status-indicator" id="status-indicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Loading...</span>
+                        </div>
+                        <div class="status-details" id="status-details">
+                            <p>Last check: <span id="last-check-time">Never</span></p>
+                            <p>Last consistent: <span id="last-consistent-time">Never</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="status-card" id="active-check">
+                        <h3>Active Check</h3>
+                        <div class="check-status" id="check-status">
+                            <span class="check-indicator">●</span>
+                            <span id="check-text">No active check</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Controls Section -->
+            <section class="controls-section">
+                <h2>Controls</h2>
+                <div class="controls-grid">
+                    <button id="run-check-btn" class="btn btn-primary">
+                        <span class="btn-icon">▶</span>
+                        Run Consistency Check
+                    </button>
+                    
+                    <button id="refresh-status-btn" class="btn btn-secondary">
+                        <span class="btn-icon">↻</span>
+                        Refresh Status
+                    </button>
+                    
+                    <button id="view-reports-btn" class="btn btn-secondary">
+                        <span class="btn-icon">📊</span>
+                        View All Reports
+                    </button>
+                </div>
+            </section>
+
+            <!-- Loading Indicator -->
+            <section id="loading-section" class="loading-section hidden">
+                <div class="loading-spinner"></div>
+                <p>Running consistency check...</p>
+                <div class="loading-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <span id="progress-text">Initializing...</span>
+                </div>
+            </section>
+
+            <!-- Latest Report Section -->
+            <section id="latest-report-section" class="report-section">
+                <h2>Latest Report</h2>
+                <div id="latest-report-content">
+                    <p class="no-data">No reports available. Run a consistency check to generate a report.</p>
+                </div>
+            </section>
+
+            <!-- Reports History Section -->
+            <section id="reports-history-section" class="report-section hidden">
+                <h2>Reports History</h2>
+                <div class="reports-controls">
+                    <select id="collection-filter" class="filter-select">
+                        <option value="">All Collections</option>
+                        <option value="users">Users</option>
+                    </select>
+                    <button id="refresh-reports-btn" class="btn btn-small">Refresh</button>
+                </div>
+                <div id="reports-list" class="reports-list">
+                    <p class="no-data">Loading reports...</p>
+                </div>
+            </section>
+
+            <!-- Statistics Section -->
+            <section id="stats-section" class="stats-section">
+                <h2>Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Checks</h3>
+                        <div class="stat-value" id="total-checks">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Documents</h3>
+                        <div class="stat-value" id="total-documents">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Inconsistencies Found</h3>
+                        <div class="stat-value" id="total-inconsistencies">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Repairs Applied</h3>
+                        <div class="stat-value" id="total-repairs">0</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>Data Consistency Checker v1.0.0 | MongoDB + Node.js + Express</p>
+        </footer>
+    </div>
+
+    <!-- Modal for Report Details -->
+    <div id="report-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Report Details</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Report details will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification hidden">
+        <div class="notification-content">
+            <span class="notification-icon" id="notification-icon"></span>
+            <span class="notification-message" id="notification-message"></span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
