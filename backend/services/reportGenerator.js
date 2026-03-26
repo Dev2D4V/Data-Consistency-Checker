@@ -160,15 +160,15 @@ class ReportGenerator {
     if (!report) return null;
     
     return {
-      id: report._id,
+      id: report._id ? report._id.toString() : null,
       timestamp: report.timestamp,
       collection: report.collection,
       totalDocuments: report.totalDocuments,
       inconsistenciesFound: report.inconsistenciesFound,
       repairsApplied: report.repairsApplied,
       documentsDeleted: report.documentsDeleted,
-      errors: report.errors,
-      details: report.details,
+      errors: report.errors || [],
+      details: report.details || [],
       duration: report.duration,
       durationFormatted: this.formatDuration(report.duration),
       status: this.getReportStatus(report)
@@ -196,7 +196,8 @@ class ReportGenerator {
    * @returns {string} Status string
    */
   getReportStatus(report) {
-    if (report.errors.length > 0) {
+    const errors = report.errors || [];
+    if (errors.length > 0) {
       return 'error';
     } else if (report.inconsistenciesFound === 0) {
       return 'clean';

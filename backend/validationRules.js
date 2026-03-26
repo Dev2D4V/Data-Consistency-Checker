@@ -58,9 +58,10 @@ const validationRules = {
 function validateDocument(document, collection = 'users') {
   const issues = [];
   const rules = validationRules[collection];
-  
+
   if (!rules) {
-    return [`No validation rules found for collection: ${collection}`];
+    console.warn(`No validation rules found for collection: ${collection}`);
+    return [];
   }
   
   // Check required fields
