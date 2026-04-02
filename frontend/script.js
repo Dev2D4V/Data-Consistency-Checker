@@ -94,7 +94,7 @@ class ConsistencyCheckerUI {
                 this.updateStatusDisplay(data.data);
             } else {
                 this.showNotification('Failed to load status', 'error');
-            }
+            }       
         } catch (error) {
             console.error('Error loading status:', error);
             this.showNotification('Error loading status', 'error');
