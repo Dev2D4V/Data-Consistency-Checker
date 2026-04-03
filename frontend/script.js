@@ -450,18 +450,27 @@ class ConsistencyCheckerUI {
             const data = await response.json();
             
             if (data.success) {
-                this.updateStatisticsDisplay(data.stats);
+                console.log(data);
+
+                this.updateStatisticsDisplay(data.data);
             }
         } catch (error) {
             console.error('Error loading statistics:', error);
         }
     }
+s
 
     updateStatisticsDisplay(stats) {
-        this.totalChecks.textContent = stats.totalChecks || 0;
-        this.totalDocuments.textContent = stats.totalDocuments || 0;
-        this.totalInconsistencies.textContent = stats.totalInconsistencies || 0;
-        this.totalRepairs.textContent = stats.totalRepairs || 0;
+        
+       this.totalChecks.textContent = stats.totalChecks || 0;
+       this.totalDocuments.textContent = stats.totalDocuments || 0;
+       this.totalInconsistencies.textContent = stats.totalInconsistencies || 0;
+       this.totalRepairs.textContent = stats.totalRepairs || 0;
+
+        
+       
+
+        
     }
 
     showNotification(message, type = 'info') {
