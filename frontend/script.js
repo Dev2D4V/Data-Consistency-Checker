@@ -213,8 +213,8 @@ class ConsistencyCheckerUI {
             const response = await fetch(`${this.apiBase}/report/latest`);
             const data = await response.json();
             
-            if (data.success && data.report) {
-                this.displayLatestReport(data.report);
+            if (data.success && data.data) {
+                this.displayLatestReport(data.data);
             } else {
                 this.latestReportContent.innerHTML = '<p class="no-data">No reports available. Run a consistency check to generate a report.</p>';
             }
@@ -324,9 +324,11 @@ class ConsistencyCheckerUI {
             } else {
                 // For now, we'll show a simplified view
                 // In a real implementation, you might want an endpoint to get full report details
-                const response = await fetch(`${this.apiBase}/report/latest`);
+                const response = await fetch(`${this.apiBase}/reports`);
                 const data = await response.json();
-                report = data.reports.find(r => r.id === reportId);
+                if (data.success) {
+                    report = data.data.find(r => r.id === reportId);
+                }
             }
             
             if (report) {
@@ -422,7 +424,7 @@ class ConsistencyCheckerUI {
             const data = await response.json();
             
             if (data.success) {
-                this.displayReports(data.reports);
+                this.displayReports(data.data);
             } else {
                 this.showNotification('Failed to load reports', 'error');
             }
