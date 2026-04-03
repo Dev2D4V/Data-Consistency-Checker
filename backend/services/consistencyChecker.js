@@ -63,8 +63,7 @@ class ConsistencyChecker {
                 details: issues.map(i => i.description).join('; ')
               });
               console.log(`Deleted irreparable document: ${doc._id}`);
-            } else if (repairResult.repairs.length > 0) {
-              // Update the document with repairs
+            } else if (repairResult.repairs.length > 0) 
               await Model.findByIdAndUpdate(doc._id, repairResult.document);
               report.repairsApplied += repairResult.repairs.length;
               

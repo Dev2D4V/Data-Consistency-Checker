@@ -91,10 +91,10 @@ class ConsistencyCheckerUI {
             const data = await response.json();
             
             if (data.success) {
-                this.updateStatusDisplay(data.status);
+                this.updateStatusDisplay(data.data);
             } else {
                 this.showNotification('Failed to load status', 'error');
-            }
+            }       
         } catch (error) {
             console.error('Error loading status:', error);
             this.showNotification('Error loading status', 'error');
@@ -324,7 +324,7 @@ class ConsistencyCheckerUI {
             } else {
                 // For now, we'll show a simplified view
                 // In a real implementation, you might want an endpoint to get full report details
-                const response = await fetch(`${this.apiBase}/reports`);
+                const response = await fetch(`${this.apiBase}/report/latest`);
                 const data = await response.json();
                 report = data.reports.find(r => r.id === reportId);
             }
@@ -450,18 +450,27 @@ class ConsistencyCheckerUI {
             const data = await response.json();
             
             if (data.success) {
-                this.updateStatisticsDisplay(data.stats);
+                console.log(data);
+
+                this.updateStatisticsDisplay(data.data);
             }
         } catch (error) {
             console.error('Error loading statistics:', error);
         }
     }
+s
 
     updateStatisticsDisplay(stats) {
-        this.totalChecks.textContent = stats.totalChecks || 0;
-        this.totalDocuments.textContent = stats.totalDocuments || 0;
-        this.totalInconsistencies.textContent = stats.totalInconsistencies || 0;
-        this.totalRepairs.textContent = stats.totalRepairs || 0;
+        
+       this.totalChecks.textContent = stats.totalChecks || 0;
+       this.totalDocuments.textContent = stats.totalDocuments || 0;
+       this.totalInconsistencies.textContent = stats.totalInconsistencies || 0;
+       this.totalRepairs.textContent = stats.totalRepairs || 0;
+
+        
+       
+
+        
     }
 
     showNotification(message, type = 'info') {

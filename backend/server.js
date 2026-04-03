@@ -11,15 +11,15 @@ const apiRoutes = require('./routes/api');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+//  Middleware configuration (handles CORS, JSON parsing, and form data)
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from frontend
+//  Serve static frontend files (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// API routes
+//  API route handling (all routes prefixed with /api)
 app.use('/api', apiRoutes);
 
 // Serve frontend for all other routes
@@ -36,7 +36,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// // 404 handler for undefined routes
 app.use((req, res) => {
   res.status(404).json({
     success: false,

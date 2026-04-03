@@ -1,192 +1,186 @@
 const express = require('express');
 const router = express.Router();
+
 const ConsistencyChecker = require('../services/consistencyChecker');
 const ReportGenerator = require('../services/reportGenerator');
 const User = require('../models/User');
+
+// Constants
+const VALID_COLLECTIONS = ['users'];
+const DEFAULT_LIMIT = 20;
 
 // Initialize services
 const consistencyChecker = new ConsistencyChecker();
 const reportGenerator = new ReportGenerator();
 
 /**
+ * Utility: Standard success response
+ */
+const successResponse = (res, data, message = null) => {
+  return res.json({
+    success: true,
+    data,
+    message,
+    timestamp: new Date()
+  });
+};
+
+/**
+ * Utility: Standard error response
+ */
+const errorResponse = (res, status, message) => {
+  return res.status(status).json({
+    success: false,
+    message,
+    timestamp: new Date()
+  });
+};
+
+/**
  * POST /api/check
- * Triggers a consistency check on a specified collection
- * Body: { collection: "users" }
+ * Trigger consistency check
  */
 router.post('/check', async (req, res) => {
   try {
     const { collection = 'users' } = req.body;
-    
-    // Validate collection name
-    const validCollections = ['users'];
-    if (!validCollections.includes(collection)) {
-      return res.status(400).json({
-        success: false,
-        error: `Invalid collection: ${collection}. Valid collections: ${validCollections.join(', ')}`
-      });
+
+    // Validate collection
+    if (!VALID_COLLECTIONS.includes(collection)) {
+      return errorResponse(
+        res,
+        400,
+        `Invalid collection: ${collection}. Allowed: ${VALID_COLLECTIONS.join(', ')}`
+      );
     }
-    
-    // Check if a check is already running
+
+    // Prevent concurrent execution
     if (consistencyChecker.isActive()) {
-      return res.status(409).json({
-        success: false,
-        error: 'Consistency check already in progress'
-      });
+      return errorResponse(res, 409, 'Consistency check already in progress');
     }
-    
-    console.log(`Starting consistency check for collection: ${collection}`);
-    
-    // Perform the consistency check
+
+    console.log(`[START] Consistency check → ${collection}`);
+
+    // Run check
     const report = await consistencyChecker.checkCollection(collection, User);
-    
-    // Save the report to database
+
+    // Save report
     const savedReport = await reportGenerator.saveReport(report);
-    
-    // Format the report for response
-    const formattedReport = reportGenerator.formatReportForDisplay(savedReport);
-    
-    res.json({
-      success: true,
-      report: formattedReport,
-      message: `Consistency check completed for ${collection}`
-    });
-    
+
+    // Format response
+    const formattedReport =
+      reportGenerator.formatReportForDisplay(savedReport);
+
+    return successResponse(
+      res,
+      formattedReport,
+      `Consistency check completed for ${collection}`
+    );
+
   } catch (error) {
-    console.error('Error in consistency check:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    console.error('[ERROR] /check:', error);
+    return errorResponse(res, 500, error.message || 'Internal Server Error');
   }
 });
 
 /**
  * GET /api/report/latest
- * Returns the most recent consistency check report
- * Query: ?collection=users (optional)
  */
 router.get('/report/latest', async (req, res) => {
   try {
     const { collection } = req.query;
-    
+
     const report = await reportGenerator.getLatestReport(collection);
-    
+
     if (!report) {
-      return res.status(404).json({
-        success: false,
-        error: 'No reports found'
-      });
+      return errorResponse(res, 404, 'No reports found');
     }
-    
-    const formattedReport = reportGenerator.formatReportForDisplay(report);
-    
-    res.json({
-      success: true,
-      report: formattedReport
-    });
-    
+
+    const formattedReport =
+      reportGenerator.formatReportForDisplay(report);
+
+    return successResponse(res, formattedReport);
+
   } catch (error) {
-    console.error('Error fetching latest report:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    console.error('[ERROR] /report/latest:', error);
+    return errorResponse(res, 500, error.message);
   }
 });
 
 /**
  * GET /api/reports
- * Returns all reports (with optional collection filter)
- * Query: ?collection=users&limit=10
  */
 router.get('/reports', async (req, res) => {
   try {
-    const { collection, limit = 20 } = req.query;
-    
-    const reports = await reportGenerator.getAllReports(collection, parseInt(limit));
-    const formattedReports = reports.map(report => 
-      reportGenerator.formatReportForDisplay(report)
+    const { collection, limit = DEFAULT_LIMIT } = req.query;
+
+    const reports = await reportGenerator.getAllReports(
+      collection,
+      parseInt(limit)
     );
-    
-    res.json({
-      success: true,
-      reports: formattedReports,
-      count: formattedReports.length
-    });
-    
+
+    const formattedReports = reports.map(r =>
+      reportGenerator.formatReportForDisplay(r)
+    );
+
+    return successResponse(res, formattedReports, null);
+
   } catch (error) {
-    console.error('Error fetching reports:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    console.error('[ERROR] /reports:', error);
+    return errorResponse(res, 500, error.message);
   }
 });
 
 /**
  * GET /api/status
- * Returns the current consistency status
- * Query: ?collection=users (optional)
  */
 router.get('/status', async (req, res) => {
   try {
     const { collection = 'users' } = req.query;
-    
+
+    if (!VALID_COLLECTIONS.includes(collection)) {
+      return errorResponse(res, 400, 'Invalid collection');
+    }
+
     const status = await consistencyChecker.getConsistencyStatus(collection);
     const latestReport = await reportGenerator.getLatestReport(collection);
-    
-    res.json({
-      success: true,
-      status: {
-        ...status,
-        isActive: consistencyChecker.isActive(),
-        latestReport: latestReport ? reportGenerator.formatReportForDisplay(latestReport) : null
-      }
+
+    return successResponse(res, {
+      ...status,
+      isActive: consistencyChecker.isActive(),
+      latestReport: latestReport
+        ? reportGenerator.formatReportForDisplay(latestReport)
+        : null
     });
-    
+
   } catch (error) {
-    console.error('Error fetching status:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    console.error('[ERROR] /status:', error);
+    return errorResponse(res, 500, error.message);
   }
 });
 
 /**
  * GET /api/stats
- * Returns summary statistics
- * Query: ?collection=users (optional)
  */
 router.get('/stats', async (req, res) => {
   try {
     const { collection } = req.query;
-    
+
     const stats = await reportGenerator.generateSummaryStats(collection);
-    
-    res.json({
-      success: true,
-      stats
-    });
-    
+
+    return successResponse(res, stats);
+
   } catch (error) {
-    console.error('Error fetching stats:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    console.error('[ERROR] /stats:', error);
+    return errorResponse(res, 500, error.message);
   }
 });
 
 /**
  * GET /api/health
- * Health check endpoint
  */
 router.get('/health', (req, res) => {
-  res.json({
-    success: true,
+  return successResponse(res, {
     status: 'healthy',
-    timestamp: new Date(),
     uptime: process.uptime(),
     active: consistencyChecker.isActive()
   });
@@ -194,27 +188,29 @@ router.get('/health', (req, res) => {
 
 /**
  * POST /api/cleanup
- * Cleanup old reports
- * Body: { daysToKeep: 30, collection: "users" }
  */
 router.post('/cleanup', async (req, res) => {
   try {
     const { daysToKeep = 30, collection } = req.body;
-    
-    const result = await reportGenerator.cleanupOldReports(daysToKeep, collection);
-    
-    res.json({
-      success: true,
-      message: `Cleaned up ${result.deletedCount} old reports`,
-      deletedCount: result.deletedCount
-    });
-    
+
+    if (daysToKeep <= 0) {
+      return errorResponse(res, 400, 'daysToKeep must be > 0');
+    }
+
+    const result = await reportGenerator.cleanupOldReports(
+      daysToKeep,
+      collection
+    );
+
+    return successResponse(
+      res,
+      { deletedCount: result.deletedCount },
+      `Cleaned up ${result.deletedCount} old reports`
+    );
+
   } catch (error) {
-    console.error('Error during cleanup:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    console.error('[ERROR] /cleanup:', error);
+    return errorResponse(res, 500, error.message);
   }
 });
 
