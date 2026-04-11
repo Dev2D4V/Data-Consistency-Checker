@@ -1,4 +1,5 @@
 const { validateDocument, repairDocument } = require('../validationRules');
+const Status = require('../models/Status');
 
 class ConsistencyChecker {
   constructor() {
@@ -22,7 +23,7 @@ class ConsistencyChecker {
     
     const report = {
       timestamp: new Date(),
-      collection: collectionName,
+      collectionName: collectionName,
       totalDocuments: 0,
       inconsistenciesFound: 0,
       repairsApplied: 0,
@@ -95,8 +96,8 @@ class ConsistencyChecker {
         }
       }
 
-      // Update eventual consistency status
-      await this.updateConsistencyStatus(collectionName, report);
+      // Consistency status will be updated by the caller after saving the report
+      console.log(`Scanning completed for ${collectionName}.`);
 
     } catch (error) {
       const errorMsg = `Consistency check failed: ${error.message}`;
@@ -125,22 +126,19 @@ class ConsistencyChecker {
    */
   async updateConsistencyStatus(collectionName, report) {
     try {
-      // For simplicity, we'll store status in a separate collection
-      // In a real system, this would check replica set status
-      const Status = require('../models/Status');
-      
+      // Consistency status is stored to track the overall health of the collection
       const isConsistent = report.inconsistenciesFound === 0 || 
                           (report.inconsistenciesFound === report.repairsApplied + report.documentsDeleted);
       
       await Status.findOneAndUpdate(
-        { collection: collectionName },
+        { collectionName: collectionName },
         {
-          collection: collectionName,
+          collectionName: collectionName,
           isConsistent,
           lastCheckTime: new Date(),
           lastConsistentTime: isConsistent ? new Date() : undefined,
           allReplicasConsistent: isConsistent, // Simulated
-          lastReportId: report._id
+          lastReportId: report._id || report.id
         },
         { upsert: true, new: true }
       );
@@ -158,12 +156,11 @@ class ConsistencyChecker {
    */
   async getConsistencyStatus(collectionName) {
     try {
-      const Status = require('../models/Status');
-      const status = await Status.findOne({ collection: collectionName });
+      const status = await Status.findOne({ collectionName: collectionName });
       
       if (!status) {
         return {
-          collection: collectionName,
+          collectionName: collectionName,
           isConsistent: false,
           lastCheckTime: null,
           lastConsistentTime: null,
@@ -173,7 +170,7 @@ class ConsistencyChecker {
       }
       
       return {
-        collection: status.collection,
+        collectionName: status.collectionName,
         isConsistent: status.isConsistent,
         lastCheckTime: status.lastCheckTime,
         lastConsistentTime: status.lastConsistentTime,

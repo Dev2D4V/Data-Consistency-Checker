@@ -1,20 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Consistency Checker Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <div class="container">
+    <div class="bg-visuals hidden" id="bg-visuals">
+        <div class="bg-blob bg-blob-1"></div>
+        <div class="bg-blob bg-blob-2"></div>
+        <div class="bg-blob bg-blob-3"></div>
+        <div class="bg-grid"></div>
+        <div class="bg-grain"></div>
+    </div>
+
+
+    <div id="login-screen" class="login-screen">
+        <div class="login-container-card">
+            <div class="login-left">
+                <div class="login-branding">
+                    <span class="logo-icon">💠</span>
+                    <h2>Consistent.io</h2>
+                </div>
+                <div class="login-promo">
+                    <h1>Fast, Reliable and Unified Data.</h1>
+                    <p>Ensure your MongoDB collections stay perfectly in sync across all shards and replicas with our
+                        advanced diagnostic engine.</p>
+                </div>
+            </div>
+            <div class="login-right">
+                <div class="login-form-area">
+                    <div class="form-header">
+                        <h2>Login</h2>
+                        <p>Welcome back! Please enter your details.</p>
+                    </div>
+                    <form id="login-form">
+                        <div class="input-group">
+                            <label for="login-id">Email or Name</label>
+                            <input type="text" id="login-id" placeholder="Enter your email" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-login">Sign In</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container hidden" id="dashboard-container">
         <header>
-            <h1>Data Consistency Checker</h1>
-            <p>Monitor & maintain data consistency across your MongoDB collections</p>
+            <div class="header-content">
+                <div class="title-group">
+                    <h1>Data Consistency Checker</h1>
+                    <p>Monitor & maintain data consistency across your MongoDB collections</p>
+                </div>
+                <div class="header-actions">
+                    <div class="user-profile-wrapper">
+                        <div class="user-icon" id="user-profile-icon">👤</div>
+                        <div class="user-tooltip" id="user-name-tooltip">
+                            <span class="user-name-text">Guest User</span>
+                        </div>
+                    </div>
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
+                        <span class="btn-icon">☀️</span>
+                    </button>
+                </div>
+            </div>
         </header>
 
         <main>
-            <!-- Status Section -->
+
             <section class="status-section">
                 <h2>System Status</h2>
                 <div class="status-grid">
@@ -29,7 +93,7 @@
                             <p>Last consistent: <span id="last-consistent-time">Never</span></p>
                         </div>
                     </div>
-                    
+
                     <div class="status-card" id="active-check">
                         <h3>Active Check</h3>
                         <div class="check-status" id="check-status">
@@ -40,7 +104,7 @@
                 </div>
             </section>
 
-            <!-- Controls Section -->
+
             <section class="controls-section">
                 <h2>Controls</h2>
                 <div class="controls-grid">
@@ -48,12 +112,12 @@
                         <span class="btn-icon">▶</span>
                         Run Consistency Check
                     </button>
-                    
+
                     <button id="refresh-status-btn" class="btn btn-secondary">
                         <span class="btn-icon">↻</span>
                         Refresh Status
                     </button>
-                    
+
                     <button id="view-reports-btn" class="btn btn-secondary">
                         <span class="btn-icon">📊</span>
                         View All Reports
@@ -61,7 +125,7 @@
                 </div>
             </section>
 
-            <!-- Loading Indicator -->
+
             <section id="loading-section" class="loading-section hidden">
                 <div class="loading-spinner"></div>
                 <p>Running consistency check...</p>
@@ -73,7 +137,7 @@
                 </div>
             </section>
 
-            <!-- Latest Report Section -->
+
             <section id="latest-report-section" class="report-section">
                 <h2>Latest Report</h2>
                 <div id="latest-report-content">
@@ -81,7 +145,7 @@
                 </div>
             </section>
 
-            <!-- Reports History Section -->
+
             <section id="reports-history-section" class="report-section hidden">
                 <h2>Reports History</h2>
                 <div class="reports-controls">
@@ -96,7 +160,7 @@
                 </div>
             </section>
 
-            <!-- Statistics Section -->
+
             <section id="stats-section" class="stats-section">
                 <h2>Statistics</h2>
                 <div class="stats-grid">
@@ -120,13 +184,39 @@
             </section>
         </main>
 
-        <!-- Footer -->
-        <footer>
-            <p>Data Consistency Checker v1.0.0 | MongoDB + Node.js + Express</p>
-        </footer>
     </div>
 
-    <!-- Modal for Report Details -->
+
+    <div id="chatbot-container" class="chatbot-container">
+        <div id="chatbot-window" class="chatbot-window hidden">
+            <div class="chatbot-header">
+                <div class="chatbot-status-icon">🤖</div>
+                <div class="chatbot-title">
+                    <h3>Consistency Assistant</h3>
+                    <span>Online | AI Powered</span>
+                </div>
+                <button id="close-chat" class="close-chat">&times;</button>
+            </div>
+            <div id="chat-messages" class="chat-messages">
+                <div class="message bot">
+                    Hello! I'm your Consistency Assistant. How can I help you today with your MongoDB data?
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Type a message...">
+                <button id="send-chat" class="send-chat">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <button id="chatbot-toggle" class="chatbot-toggle" aria-label="Open Chat">
+            <span class="chat-icon">💬</span>
+        </button>
+    </div>
+
+
     <div id="report-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -139,7 +229,7 @@
         </div>
     </div>
 
-    <!-- Notification Toast -->
+
     <div id="notification" class="notification hidden">
         <div class="notification-content">
             <span class="notification-icon" id="notification-icon"></span>
@@ -149,4 +239,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

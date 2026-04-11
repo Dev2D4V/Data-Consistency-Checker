@@ -6,7 +6,7 @@ const reportSchema = new mongoose.Schema({
     default: Date.now,
     required: true
   },
-  collection: {
+  collectionName: {
     type: String,
     required: true
   },
@@ -32,7 +32,9 @@ const reportSchema = new mongoose.Schema({
   details: [{
     documentId: String,
     issue: String,
-    action: String
+    action: String,
+    oldValue: mongoose.Schema.Types.Mixed,
+    newValue: mongoose.Schema.Types.Mixed
   }],
   duration: {
     type: Number, // in milliseconds

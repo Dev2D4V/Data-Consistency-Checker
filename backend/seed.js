@@ -3,76 +3,54 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 
 // Clean sample data - all valid documents
+// Sample data with both clean and inconsistent documents
 const sampleUsers = [
-  {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    age: 30,
-    role: 'user',
-    isActive: true
+  // VALID USERS
+  { name: 'John Doe', email: 'john.doe@example.com', age: 30, role: 'user', isActive: true },
+  { name: 'Jane Smith', email: 'jane.smith@example.com', age: 25, role: 'admin', isActive: true },
+  
+  // INCONSISTENT USERS (for testing)
+  { 
+    name: 'Missing Email User', 
+    email: '', // Required field missing
+    age: 20, 
+    role: 'user', 
+    isActive: true 
   },
-  {
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    age: 25,
-    role: 'admin',
-    isActive: true
+  { 
+    name: 'Negative Age User', 
+    email: 'negative@example.com', 
+    age: -5, // Out of range
+    role: 'user', 
+    isActive: true 
   },
-  {
-    name: 'Bob Johnson',
-    email: 'bob.johnson@example.com',
-    age: 35,
-    role: 'user',
-    isActive: true
+  { 
+    name: 'Invalid Role User', 
+    email: 'role@example.com', 
+    age: 40, 
+    role: 'guest', // Invalid enum value
+    isActive: true 
   },
-  {
-    name: 'Alice Wilson',
-    email: 'alice.wilson@example.com',
-    age: 28,
-    role: 'user',
-    isActive: true
+  { 
+    name: 'Wrong Type User', 
+    email: 'type@example.com', 
+    age: '25', // Should be number
+    role: 'user', 
+    isActive: true 
   },
-  {
-    name: 'Charlie Brown',
-    email: 'charlie.brown@example.com',
-    age: 42,
-    role: 'user',
-    isActive: true
+  { 
+    name: 'Bad Email User', 
+    email: 'invalid-email-format', // Fails custom validation
+    age: 33, 
+    role: 'user', 
+    isActive: true 
   },
-  {
-    name: 'Diana Prince',
-    email: 'diana.prince@example.com',
-    age: 32,
-    role: 'moderator',
-    isActive: true
-  },
-  {
-    name: 'Eve Adams',
-    email: 'eve.adams@example.com',
-    age: 29,
-    role: 'user',
-    isActive: false
-  },
-  {
-    name: 'Frank Miller',
-    email: 'frank.miller@example.com',
-    age: 45,
-    role: 'admin',
-    isActive: true
-  },
-  {
-    name: 'Grace Lee',
-    email: 'grace.lee@example.com',
-    age: 27,
-    role: 'user',
-    isActive: true
-  },
-  {
-    name: 'Henry Ford',
-    email: 'henry.ford@example.com',
-    age: 50,
-    role: 'moderator',
-    isActive: true
+  { 
+    name: 'Too Old User', 
+    email: 'old@example.com', 
+    age: 200, // Out of range [0, 150]
+    role: 'user', 
+    isActive: true 
   }
 ];
 
@@ -94,7 +72,7 @@ async function seedDatabase() {
     console.log('Inserting sample users...');
     const insertedUsers = await mongoose.connection.db.collection('users').insertMany(sampleUsers);
     
-    console.log(`Successfully inserted ${insertedUsers.length} users`);
+    console.log(`Successfully inserted ${insertedUsers.insertedCount} users`);
     
     // Display summary of inconsistencies
     console.log('\n=== Sample Data Summary ===');

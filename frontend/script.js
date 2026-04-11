@@ -1,4 +1,4 @@
-// Data Consistency Checker Frontend Script
+
 
 class ConsistencyCheckerUI {
     constructor() {
@@ -7,12 +7,16 @@ class ConsistencyCheckerUI {
         this.currentReport = null;
         
         this.initializeElements();
+        this.setupTheme();
         this.attachEventListeners();
         this.loadInitialData();
+        this.setupRevealAnimations();
     }
 
     initializeElements() {
-        // Status elements
+
+        this.sections = document.querySelectorAll('section, header, footer');
+
         this.statusIndicator = document.getElementById('status-indicator');
         this.statusText = document.querySelector('.status-text');
         this.lastCheckTime = document.getElementById('last-check-time');
@@ -20,38 +24,59 @@ class ConsistencyCheckerUI {
         this.checkStatus = document.getElementById('check-status');
         this.checkText = document.getElementById('check-text');
         
-        // Control elements
+
         this.runCheckBtn = document.getElementById('run-check-btn');
         this.refreshStatusBtn = document.getElementById('refresh-status-btn');
         this.viewReportsBtn = document.getElementById('view-reports-btn');
         
-        // Loading elements
+
         this.loadingSection = document.getElementById('loading-section');
         this.progressFill = document.getElementById('progress-fill');
         this.progressText = document.getElementById('progress-text');
         
-        // Report elements
+
         this.latestReportContent = document.getElementById('latest-report-content');
         this.reportsHistorySection = document.getElementById('reports-history-section');
         this.reportsList = document.getElementById('reports-list');
         this.collectionFilter = document.getElementById('collection-filter');
         this.refreshReportsBtn = document.getElementById('refresh-reports-btn');
         
-        // Statistics elements
+
         this.totalChecks = document.getElementById('total-checks');
         this.totalDocuments = document.getElementById('total-documents');
         this.totalInconsistencies = document.getElementById('total-inconsistencies');
         this.totalRepairs = document.getElementById('total-repairs');
         
-        // Modal elements
+
         this.reportModal = document.getElementById('report-modal');
         this.modalClose = document.getElementById('modal-close');
         this.modalBody = document.getElementById('modal-body');
         
-        // Notification element
+
         this.notification = document.getElementById('notification');
         this.notificationIcon = document.getElementById('notification-icon');
         this.notificationMessage = document.getElementById('notification-message');
+        
+
+        this.bgVisuals = document.getElementById('bg-visuals');
+        this.themeToggle = document.getElementById('theme-toggle');
+
+
+        this.loginScreen = document.getElementById('login-screen');
+        this.loginForm = document.getElementById('login-form');
+        this.loginIdInput = document.getElementById('login-id');
+        this.dashboardContainer = document.getElementById('dashboard-container');
+        
+
+        this.chatbotToggle = document.getElementById('chatbot-toggle');
+        this.chatbotWindow = document.getElementById('chatbot-window');
+        this.closeChat = document.getElementById('close-chat');
+        this.chatInput = document.getElementById('chat-input');
+        this.sendChat = document.getElementById('send-chat');
+        this.chatMessages = document.getElementById('chat-messages');
+
+
+        this.userNameTooltip = document.querySelector('.user-name-text');
     }
 
     attachEventListeners() {
@@ -62,19 +87,97 @@ class ConsistencyCheckerUI {
         this.collectionFilter.addEventListener('change', () => this.loadReports());
         this.modalClose.addEventListener('click', () => this.closeModal());
         
-        // Close modal on outside click
+
+        if (this.chatbotToggle) {
+            this.chatbotToggle.addEventListener('click', () => this.toggleChatbot());
+        }
+        if (this.closeChat) {
+            this.closeChat.addEventListener('click', () => this.toggleChatbot());
+        }
+        if (this.sendChat) {
+            this.sendChat.addEventListener('click', () => this.sendMessage());
+        }
+        if (this.chatInput) {
+            this.chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.sendMessage();
+            });
+        }
+
+
+        if (this.loginForm) {
+            this.loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleLogin();
+            });
+        }
+
+
+        if (this.themeToggle) {
+            this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        }
+        
+
         this.reportModal.addEventListener('click', (e) => {
             if (e.target === this.reportModal) {
                 this.closeModal();
             }
         });
         
-        // Auto-refresh status every 30 seconds
+
         setInterval(() => {
             if (!this.isChecking) {
                 this.loadStatus();
             }
         }, 30000);
+    }
+
+    setupTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        this.updateThemeIcon(savedTheme);
+    }
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        this.updateThemeIcon(newTheme);
+    }
+
+    updateThemeIcon(theme) {
+        if (this.themeToggle) {
+            const icon = this.themeToggle.querySelector('.btn-icon');
+            if (icon) {
+                icon.textContent = theme === 'dark' ? '🌙' : '☀️';
+            }
+        }
+    }
+
+    setupRevealAnimations() {
+        const options = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+
+                    const delay = index * 100;
+                    setTimeout(() => {
+                        entry.target.classList.add('revealed');
+                    }, delay);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, options);
+
+        this.sections.forEach((section) => {
+            section.classList.add('reveal-on-scroll');
+            observer.observe(section);
+        });
     }
 
     async loadInitialData() {
@@ -93,7 +196,7 @@ class ConsistencyCheckerUI {
             if (data.success) {
                 this.updateStatusDisplay(data.data);
             } else {
-                this.showNotification('Failed to load status', 'error');
+                this.showNotification(`Failed to load status: ${data.message}`, 'error');
             }       
         } catch (error) {
             console.error('Error loading status:', error);
@@ -105,7 +208,7 @@ class ConsistencyCheckerUI {
         const statusDot = this.statusIndicator.querySelector('.status-dot');
         const checkIndicator = this.checkStatus.querySelector('.check-indicator');
         
-        // Update consistency status
+
         if (status.isConsistent) {
             statusDot.className = 'status-dot consistent';
             this.statusText.textContent = 'Consistent';
@@ -114,21 +217,21 @@ class ConsistencyCheckerUI {
             this.statusText.textContent = 'Inconsistent';
         }
         
-        // Update last check time
+
         if (status.lastCheckTime) {
             this.lastCheckTime.textContent = this.formatDateTime(status.lastCheckTime);
         } else {
             this.lastCheckTime.textContent = 'Never';
         }
         
-        // Update last consistent time
+
         if (status.lastConsistentTime) {
             this.lastConsistentTime.textContent = this.formatDateTime(status.lastConsistentTime);
         } else {
             this.lastConsistentTime.textContent = 'Never';
         }
         
-        // Update active check status
+
         if (status.isActive) {
             checkIndicator.className = 'check-indicator active';
             this.checkText.textContent = 'Check in progress...';
@@ -170,17 +273,17 @@ class ConsistencyCheckerUI {
             this.updateProgress(100, 'Complete!');
             
             if (data.success) {
-                this.currentReport = data.report;
+                this.currentReport = data.data;
                 this.showNotification('Consistency check completed successfully', 'success');
                 
-                // Refresh all data
+
                 await Promise.all([
                     this.loadStatus(),
-                    this.displayLatestReport(data.report),
+                    this.displayLatestReport(data.data),
                     this.loadStatistics()
                 ]);
             } else {
-                this.showNotification(`Check failed: ${data.error}`, 'error');
+                this.showNotification(`Check failed: ${data.message}`, 'error');
             }
         } catch (error) {
             console.error('Error running consistency check:', error);
@@ -233,7 +336,7 @@ class ConsistencyCheckerUI {
         const reportHtml = this.createReportCard(report, true);
         this.latestReportContent.innerHTML = reportHtml;
         
-        // Attach event listeners to the new elements
+
         this.attachReportEventListeners();
     }
 
@@ -271,7 +374,7 @@ class ConsistencyCheckerUI {
                 </div>
                 
                 <div class="report-details">
-                    <p><strong>Collection:</strong> ${report.collection}</p>
+                    <p><strong>Collection:</strong> ${report.collectionName || 'Default'}</p>
                     <p><strong>Duration:</strong> ${duration}</p>
                     ${report.errors.length > 0 ? `<p><strong>Errors:</strong> ${report.errors.length}</p>` : ''}
                 </div>
@@ -297,7 +400,7 @@ class ConsistencyCheckerUI {
     }
 
     attachReportEventListeners() {
-        // View details buttons
+
         document.querySelectorAll('.view-details-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const reportId = e.target.dataset.reportId;
@@ -305,7 +408,7 @@ class ConsistencyCheckerUI {
             });
         });
         
-        // Delete report buttons
+
         document.querySelectorAll('.delete-report-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const reportId = e.target.dataset.reportId;
@@ -316,14 +419,12 @@ class ConsistencyCheckerUI {
 
     async viewReportDetails(reportId) {
         try {
-            // Find the report in the current data or fetch it
+
             let report = null;
             
             if (this.currentReport && this.currentReport.id === reportId) {
                 report = this.currentReport;
             } else {
-                // For now, we'll show a simplified view
-                // In a real implementation, you might want an endpoint to get full report details
                 const response = await fetch(`${this.apiBase}/reports`);
                 const data = await response.json();
                 if (data.success) {
@@ -347,7 +448,7 @@ class ConsistencyCheckerUI {
             <div class="report-details-full">
                 <h4>Report Information</h4>
                 <p><strong>ID:</strong> ${report.id}</p>
-                <p><strong>Collection:</strong> ${report.collection}</p>
+                <p><strong>Collection:</strong> ${report.collectionName || 'Default'}</p>
                 <p><strong>Timestamp:</strong> ${this.formatDateTime(report.timestamp)}</p>
                 <p><strong>Duration:</strong> ${report.durationFormatted || this.formatDuration(report.duration)}</p>
                 <p><strong>Status:</strong> <span class="report-status ${this.getReportStatusClass(report.status)}">${report.status}</span></p>
@@ -426,7 +527,7 @@ class ConsistencyCheckerUI {
             if (data.success) {
                 this.displayReports(data.data);
             } else {
-                this.showNotification('Failed to load reports', 'error');
+                this.showNotification(`Failed to load reports: ${data.message}`, 'error');
             }
         } catch (error) {
             console.error('Error loading reports:', error);
@@ -460,40 +561,38 @@ class ConsistencyCheckerUI {
             console.error('Error loading statistics:', error);
         }
     }
-s
 
     updateStatisticsDisplay(stats) {
-        
-       this.totalChecks.textContent = stats.totalChecks || 0;
-       this.totalDocuments.textContent = stats.totalDocuments || 0;
-       this.totalInconsistencies.textContent = stats.totalInconsistencies || 0;
-       this.totalRepairs.textContent = stats.totalRepairs || 0;
-
-        
-       
-
-        
+        this.totalChecks.textContent = stats.totalChecks || 0;
+        this.totalDocuments.textContent = stats.totalDocuments || 0;
+        this.totalInconsistencies.textContent = stats.totalInconsistencies || 0;
+        this.totalRepairs.textContent = stats.totalRepairs || 0;
     }
 
+
     showNotification(message, type = 'info') {
+        const notification = this.notification;
+        if (!notification) return;
+
         this.notificationMessage.textContent = message;
-        this.notification.className = `notification ${type}`;
+        notification.className = `notification ${type}`;
         
-        // Set icon based on type
+
         const icons = {
-            'success': '✓',
-            'error': '✗',
-            'warning': '⚠',
-            'info': 'ℹ'
+            'success': '✅',
+            'error': '❌',
+            'warning': '⚠️',
+            'info': 'ℹ️'
         };
         this.notificationIcon.textContent = icons[type] || icons.info;
         
-        this.notification.classList.remove('hidden');
+        notification.classList.remove('hidden');
+        notification.style.display = 'flex'; // Ensure it's visible if hidden class is removed
         
-        // Auto-hide after 5 seconds
+
         setTimeout(() => {
-            this.notification.classList.add('hidden');
-        }, 5000);
+            notification.classList.add('hidden');
+        }, 4000);
     }
 
     formatDateTime(dateString) {
@@ -518,9 +617,109 @@ s
             return `${(ms / 60000).toFixed(2)}m`;
         }
     }
+
+
+    toggleChatbot() {
+        if (this.chatbotWindow) {
+            this.chatbotWindow.classList.toggle('hidden');
+            if (!this.chatbotWindow.classList.contains('hidden')) {
+                this.chatInput.focus();
+            }
+        }
+    }
+
+    sendMessage() {
+        const text = this.chatInput.value.trim();
+        if (!text) return;
+
+        this.appendMessage('user', text);
+        this.chatInput.value = '';
+        
+
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+
+
+        setTimeout(() => {
+            const response = this.getBotResponse(text);
+            this.appendMessage('bot', response);
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        }, 1000);
+    }
+
+    appendMessage(sender, text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+        msgDiv.textContent = text;
+        this.chatMessages.appendChild(msgDiv);
+    }
+
+    getBotResponse(text) {
+        const query = text.toLowerCase();
+        
+
+        const totalChecks = document.getElementById('total-checks')?.textContent || '0';
+        const statusText = document.querySelector('.status-text')?.textContent || 'Unknown';
+        const lastCheck = document.getElementById('last-check-time')?.textContent || 'Unknown';
+        const inconsistencies = document.getElementById('total-inconsistencies')?.textContent || '0';
+
+        if (query.includes('status') || query.includes('how is the system')) {
+            return `System status is currently: ${statusText}. The last scan was completed on ${lastCheck}.`;
+        }
+        
+        if (query.includes('inconsistency') || query.includes('errors') || query.includes('total')) {
+            return `There have been ${totalChecks} total checks performed, with ${inconsistencies} inconsistencies identified and resolved so far.`;
+        }
+
+        if (query.includes('how many checks') || query.includes('total checks')) {
+            return `A total of ${totalChecks} consistency checks have been logged in the system.`;
+        }
+
+        if (query.includes('repair') || query.includes('fix')) {
+            return "Repairs are handled automatically during the scanning process. You can view specific repair actions in the 'Latest Report' section below.";
+        }
+
+        if (query.includes('hello') || query.includes('hi')) {
+            return "Hello! I'm your Data Consistency Assistant. I can tell you about the system's current consistency status, total checks performed, or help you understand the latest report.";
+        }
+
+        if (query.includes('help')) {
+            return "Try asking: 'What is the current status?', 'How many checks have been run?', or 'Tell me about the latest report'.";
+        }
+
+        return "I'm not exactly sure about that, but I can help with system status, total check counts, and consistency reports. Try asking about 'status' or 'total checks'.";
+    }
+
+    handleLogin() {
+        const userId = this.loginIdInput.value.trim();
+        if (!userId) return;
+
+
+        if (this.userNameTooltip) {
+            this.userNameTooltip.textContent = userId;
+        }
+
+
+        this.loginScreen.style.opacity = '0';
+        this.loginScreen.style.transform = 'translateY(20px)';
+        this.loginScreen.style.transition = 'all 0.5s var(--transition-timing)';
+
+        setTimeout(() => {
+            this.loginScreen.classList.add('hidden');
+            this.dashboardContainer.classList.remove('hidden');
+            if (this.bgVisuals) this.bgVisuals.classList.remove('hidden');
+            
+            this.dashboardContainer.style.opacity = '0';
+            this.dashboardContainer.style.animation = 'slideUpFade 0.6s var(--transition-timing) forwards';
+            
+            this.showNotification(`Welcome back, ${userId}!`, 'success');
+            
+
+            this.setupRevealAnimations();
+        }, 500);
+    }
 }
 
-// Initialize the application when DOM is loaded
+
 document.addEventListener('DOMContentLoaded', () => {
     new ConsistencyCheckerUI();
 });

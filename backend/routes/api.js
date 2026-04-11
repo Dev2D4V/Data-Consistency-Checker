@@ -66,6 +66,9 @@ router.post('/check', async (req, res) => {
     // Save report
     const savedReport = await reportGenerator.saveReport(report);
 
+    // Update status using the saved report to ensure we have the correct ID
+    await consistencyChecker.updateConsistencyStatus(collection, savedReport);
+
     // Format response
     const formattedReport =
       reportGenerator.formatReportForDisplay(savedReport);
