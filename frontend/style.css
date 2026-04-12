@@ -216,7 +216,7 @@ header {
     border-radius: var(--radius-md);
     box-shadow: 0 24px 64px rgba(0,0,0,0.5);
     opacity: 0; visibility: hidden;
-    transform: translateY(-8px);
+    transform: translateY(10px);
     transition: all 0.3s var(--transition-timing);
     z-index: 9999;
     min-width: 220px;
@@ -228,6 +228,17 @@ header {
     opacity: 1; 
     visibility: visible; 
     transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Bridge the gap to prevent hover loss */
+.user-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: 0;
+    right: 0;
+    height: 30px;
     pointer-events: auto;
 }
 
@@ -522,21 +533,28 @@ section h2::before {
 .chatbot-title h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; }
 .chatbot-title span { font-size: 0.8rem; opacity: 0.8; font-weight: 500; }
 
+.chatbot-status-icon {
+    font-size: 2.4rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+
 .close-chat {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     border: none;
     color: white;
-    font-size: 1.5rem;
+    font-size: 2rem;
     cursor: pointer;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
     line-height: 1;
-    padding-bottom: 4px; /* Move the X up slightly */
+    padding-bottom: 2px; /* Fine-tuned alignment for &times; symbol */
 }
 
 .close-chat:hover { background: rgba(255, 255, 255, 0.2); transform: rotate(90deg); }
