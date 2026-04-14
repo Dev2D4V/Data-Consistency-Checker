@@ -44,18 +44,31 @@ const errorResponse = (res, status, message) => {
 
 /**
  * POST /api/check
- * Trigger consistency check
+ * Trigger consistency check on user's connected database
  */
 router.post('/check', async (req, res) => {
   try {
-    const { collection = 'users' } = req.body;
+    const { collection = 'users', sessionId } = req.body;
 
-    // Validate collection
-    if (!VALID_COLLECTIONS.includes(collection)) {
+    if (!sessionId) {
+      return errorResponse(res, 400, 'Session ID is required. Please connect to a database first.');
+    }
+
+    // Check if session has an active connection
+    if (!activeConnections.has(sessionId)) {
+      return errorResponse(res, 400, 'No active database connection. Please connect first.');
+    }
+
+    const connection = activeConnections.get(sessionId);
+    const connInfo = connections.get(sessionId);
+
+    // Validate collection against available collections in user's database
+    const availableCollections = connInfo.collections || [];
+    if (!availableCollections.includes(collection)) {
       return errorResponse(
         res,
         400,
-        `Invalid collection: ${collection}. Allowed: ${VALID_COLLECTIONS.join(', ')}`
+        `Collection '${collection}' not found in connected database. Available: ${availableCollections.join(', ') || 'none'}`
       );
     }
 
@@ -64,10 +77,17 @@ router.post('/check', async (req, res) => {
       return errorResponse(res, 409, 'Consistency check already in progress');
     }
 
-    console.log(`[START] Consistency check → ${collection}`);
+    console.log(`[START] Consistency check → ${collection} (session: ${sessionId})`);
 
-    // Run check
-    const report = await consistencyChecker.checkCollection(collection, User);
+    // Create dynamic model from user's connection
+    const dynamicModel = connection.model(
+      collection,
+      new mongoose.Schema({}, { strict: false }),
+      collection
+    );
+
+    // Run check on user's database
+    const report = await consistencyChecker.checkCollection(collection, dynamicModel);
 
     // Save report
     const savedReport = await reportGenerator.saveReport(report);

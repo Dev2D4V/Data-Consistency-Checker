@@ -401,21 +401,31 @@ class ConsistencyCheckerUI {
 
     async runConsistencyCheck() {
         if (this.isChecking) return;
-        
+
+        // Check if connected
+        if (!this.isConnected || !this.sessionId) {
+            this.showNotification('Please connect to a database first', 'error');
+            this.showConnectionModal();
+            return;
+        }
+
         this.isChecking = true;
         this.runCheckBtn.disabled = true;
         this.showLoadingSection();
         this.updateProgress(10, 'Starting consistency check...');
-        
+
         try {
             this.updateProgress(25, 'Scanning collection...');
-            
+
             const response = await fetch(`${this.apiBase}/check`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ collection: 'users' })
+                body: JSON.stringify({
+                    collection: 'users',
+                    sessionId: this.sessionId
+                })
             });
             
             this.updateProgress(75, 'Processing results...');
