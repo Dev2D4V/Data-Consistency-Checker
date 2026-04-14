@@ -105,6 +105,7 @@ class SimpleValidator {
         }
         
         // Apply fix
+        console.log(`[SIMPLE] Updating DB: ${documentId} -> ${field} = ${JSON.stringify(update[field])}`);
         const result = await Model.findByIdAndUpdate(
           documentId,
           { $set: update },
@@ -112,6 +113,7 @@ class SimpleValidator {
         );
         
         if (result) {
+          const newValue = result[field];
           repairs.push({
             documentId,
             field,
@@ -119,9 +121,9 @@ class SimpleValidator {
             oldValue: issue.currentValue,
             newValue: update[field]
           });
-          console.log(`[SIMPLE] Repaired ${documentId}: set ${field} to ${update[field]}`);
+          console.log(`[SIMPLE] ✓ SAVED TO DB: ${documentId} now has ${field} = ${JSON.stringify(newValue)}`);
         } else {
-          console.log(`[SIMPLE] Failed to repair ${documentId}: document not found`);
+          console.log(`[SIMPLE] ✗ FAILED: ${documentId} not found or not updated`);
         }
       } catch (error) {
         console.error(`[SIMPLE] Repair failed:`, error.message);
